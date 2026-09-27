@@ -1,0 +1,659 @@
+{
+  "name": "Pipeline Cotizaciones Personalizadas - Airflow",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Solicitud de Presupuesto - Remeras Personalizadas",
+        "formDescription": "Completá los datos de tu pedido para recibir una propuesta técnica y comercial a medida.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Nombre y Apellido",
+              "placeholder": "Matias | Airflow CF",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email",
+              "placeholder": "admairflowstore@gmail.com",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Teléfono / WhatsApp",
+              "fieldType": "number",
+              "placeholder": "3516856537",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Cantidad de remeras",
+              "fieldType": "number",
+              "placeholder": "44",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Tamaño de estampas",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Estándar (1 chico hasta 10x10 + 1 grande hasta 26x26)"
+                  },
+                  {
+                    "option": "Logos adicionales / Ubicaciones extra"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "¿Acepta nuestro logo chico en la prenda para un 10% OFF?",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Si"
+                  },
+                  {
+                    "option": "No"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "¿Requiere Factura A/B (+21% IVA)?",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Sí (+21% IVA)"
+                  },
+                  {
+                    "option": "No (Comprobante X)"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0f7e4c9f-8a60-4489-ad34-be023cff0101",
+      "name": "On form submission",
+      "webhookId": "43d9b3b0-1764-4b4d-ae6d-cd26707e8f10"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5077c110-204a-4e8c-9767-b50d98b52b0b",
+              "leftValue": "={{ $json['Cantidad de remeras'] }}",
+              "rightValue": 9,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        224,
+        0
+      ],
+      "id": "2e40563b-22fe-45f6-bcba-cbb3e9ed4ce4",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "3e1dac35-1e20-8010-b7a8-000b8be48aed",
+          "mode": "list",
+          "cachedResultName": "CLIENTES",
+          "cachedResultUrl": "https://app.notion.com/p/3e1dac351e208083adc5d4b19bb78225"
+        },
+        "title": "={{ $('On form submission').item.json['Nombre y Apellido'] }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Email|email",
+              "emailValue": "={{ $('On form submission').item.json['Email'] }}"
+            },
+            {
+              "key": "Telefono|number",
+              "numberValue": "={{ $('On form submission').item.json['Teléfono / WhatsApp'] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        448,
+        -96
+      ],
+      "id": "456b1e2e-e74f-4595-9571-f5da3856abda",
+      "name": "Create a database page",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "bUslQz2grPaZy1B9",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "3e1dac35-1e20-80b2-b5ba-000bc4873d47",
+          "mode": "list",
+          "cachedResultName": "PRESUPUESTOS PERSONALIZADOS",
+          "cachedResultUrl": "https://app.notion.com/p/3e1dac351e208083adc5d4b19bb78225"
+        },
+        "title": "=PRE-{{ $now.toFormat('yyyyMMdd-HHmm') }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Detalle_Pedido|rich_text",
+              "textContent": "=Remeras: {{ $('On form submission').item.json['Cantidad de remeras'] }} u. | Estampas: {{ $('On form submission').item.json['Tamaño de estampas'] }} | Sponsor: {{ $('On form submission').item.json['¿Acepta nuestro logo chico en la prenda para un 10% OFF?'] }} | Factura: {{ $('On form submission').item.json['¿Requiere Factura A/B (+21% IVA)?'] }}"
+            },
+            {
+              "key": "Estado|select",
+              "selectValue": "Pendiente_IA"
+            },
+            {
+              "key": "CLIENTES|relation",
+              "relationValue": [
+                "={{ $json.id }}"
+              ]
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        672,
+        -96
+      ],
+      "id": "2425321d-9fbc-43fb-9ae8-305d6996dbfe",
+      "name": "Create a database page1",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "bUslQz2grPaZy1B9",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=IMPORTANTE - PASO OBLIGATORIO:\nAntes de escribir cualquier respuesta o número, DEBES ejecutar tu herramienta 'Get a data source in Notion' para leer las tarifas y directrices de producción. No respondas con texto provisional ni corchetes. Ejecuta la herramienta ahora mismo.\n\nDATOS DEL CLIENTE Y PEDIDO:\n- Cantidad de prendas: {{ $('On form submission').item.json['Cantidad de remeras'] }} unidades\n- Estampas solicitadas: {{ $('On form submission').item.json['Tamaño de estampas'] }}\n- Acepta logo sponsor (10% de descuento): {{ $('On form submission').item.json['¿Acepta nuestro logo chico en la prenda para un 10% OFF?'] }}\n- Solicita Facturación formal (+21% IVA): {{ $('On form submission').item.json['¿Requiere Factura A/B (+21% IVA)?'] }}\n\nINSTRUCCIONES TRAS CONSULTAR LA HERRAMIENTA:\n1. Extrae de las reglas el precio unitario exacto correspondiente a las {{ $('On form submission').item.json['Cantidad de remeras'] }} unidades.\n2. Calcula: Subtotal Base = Cantidad * Precio Unitario.\n3. Si aceptó sponsor, aplica el 10% de descuento sobre el Subtotal Base.\n4. Si solicitó factura, suma el 21% de IVA.\n5. Incluye la aclaración sobre las estampas incluidas y el tiempo de confección de 15 días hábiles.\n6. Devuelve la propuesta formal terminada con todos los importes calculados en pesos argentinos ($).",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        896,
+        -96
+      ],
+      "id": "31370b49-b8a2-4161-bffc-c80ae502c1f9",
+      "name": "AI Agent",
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "model": "meta-llama/llama-3.3-70b-instruct",
+        "options": {
+          "maxTokens": 2000,
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        768,
+        112
+      ],
+      "id": "4ac0b0f1-63e1-4b62-b3a6-72e27f82f562",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "ceSeYsjpxsOq9tGh",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Call this tool to retrieve the complete pricing rules, quantity discounts, VAT rules, and production guidelines from Notion. Always call this tool first before answering.",
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "operation": "getAll",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "3e1dac35-1e20-8054-9139-000b39ff1c01",
+          "mode": "id"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notionTool",
+      "typeVersion": 3,
+      "position": [
+        1056,
+        112
+      ],
+      "id": "935a102f-9ccb-4b2e-9310-47f8ede00039",
+      "name": "Get many database pages in Notion",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "bUslQz2grPaZy1B9",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Create a database page1').item.json.id }}",
+          "__regex": "^([0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12})"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Cotizacion_IA|rich_text",
+              "textContent": "={{ $json.output }}"
+            },
+            {
+              "key": "Estado|select",
+              "selectValue": "Borrador_Generado"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        1264,
+        -96
+      ],
+      "id": "46a8e63b-f636-46fb-a91a-fe3599e0c628",
+      "name": "Update a database page",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "bUslQz2grPaZy1B9",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "listId": "6ab964546e4421f6ba314ad9",
+        "name": "=Presupuesto: {{ $('On form submission').item.json['Nombre y Apellido'] }} ({{ $('On form submission').item.json['Cantidad de remeras'] }} u.)",
+        "description": "=📌 DATOS DEL CLIENTE Y PEDIDO:\n- ID Presupuesto: {{ $json.property_id_presupuesto }}\n- Cliente: {{ $('On form submission').item.json['Nombre y Apellido'] }}\n- Teléfono: {{ $('On form submission').item.json['Teléfono / WhatsApp'] }}\n- Email: {{ $('On form submission').item.json['Email'] }}\n- Detalle: {{ $json.property_detalle_pedido }}\n\n🔗 Link Notion: {{ $json.url }}\n\n🤖 PROPUESTA CALCULADA POR IA:\n{{ $json.property_cotizacion_ia }}\n\n---\n⚠️ ACCIÓN HITL REQUERIDA:\nRevisar cálculo y arte. Al aprobar, marcar en Notion o mover a 'Aprobado'.\n\n🔗 LINK DE APROBACIÓN (HUMAN-IN-THE-LOOP):\n{{ $execution.resumeUrl }}\n\n⚠️ Al hacer clic en este enlace, confirmás la cotización y el sistema le enviará automáticamente el correo formal con el presupuesto al cliente.",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.trello",
+      "typeVersion": 1,
+      "position": [
+        1488,
+        -96
+      ],
+      "id": "c3796c6a-faae-433a-8288-1c7a518fc615",
+      "name": "Create a card",
+      "credentials": {
+        "trelloApi": {
+          "id": "U2yvZ00Aiinbo9E2",
+          "name": "Trello account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Create a database page1').item.json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Trello_Card_ID|rich_text",
+              "textContent": "={{ $json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        1712,
+        -96
+      ],
+      "id": "b1bf00dc-0db0-47d9-8aec-c58235ac8a8a",
+      "name": "Update a database page1",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "bUslQz2grPaZy1B9",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1936,
+        -96
+      ],
+      "id": "2f27c12e-f369-4589-8c13-86e447936bd6",
+      "name": "Wait",
+      "webhookId": "400481a6-2429-40fb-9474-afa517436f81"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Create a database page1').item.json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Aprobado_HITL|checkbox",
+              "checkboxValue": true
+            },
+            {
+              "key": "Estado|select",
+              "selectValue": "Cotizado_Enviado"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        2160,
+        -96
+      ],
+      "id": "b35af2d9-9332-40e5-a270-873c34d817d2",
+      "name": "Update a database page2",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "bUslQz2grPaZy1B9",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('On form submission').item.json['Email'] }}",
+        "subject": "=Presupuesto Formal - Remeras Personalizadas | {{ $('On form submission').item.json['Nombre y Apellido'] }}",
+        "emailType": "text",
+        "message": "=Hola {{ $('On form submission').item.json['Nombre y Apellido'] }},\n\n¡Muchas gracias por contactarnos!\n\nA continuación te compartimos el detalle y presupuesto formal validado para tu pedido:\n\n{{ $('Update a database page').item.json.property_cotizacion_ia }}\n\nQuedamos a tu entera disposición ante cualquier consulta o para coordinar la seña y dar inicio a la producción.\n\nSaludos cordiales,\nEquipo de Producción",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2384,
+        -96
+      ],
+      "id": "427f52f2-259b-4102-ba29-42701cc1b7b2",
+      "name": "Send a message",
+      "webhookId": "caa4dd6d-de61-4550-bb81-9eb649cd8a46",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ckWa0KKlMul3YAqm",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "databasePage",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "3e1dac35-1e20-80b2-b5ba-000bc4873d47",
+          "mode": "list",
+          "cachedResultName": "PRESUPUESTOS PERSONALIZADOS",
+          "cachedResultUrl": "https://app.notion.com/p/3e1dac351e208083adc5d4b19bb78225"
+        },
+        "title": "=ERROR-DATOS-INCOMPLETOS-{{ $now.toFormat('yyyyLLdd-HHmm') }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Estado|select",
+              "selectValue": "Error_Faltan_Datos"
+            },
+            {
+              "key": "Detalle_Pedido|rich_text",
+              "textContent": "=Solicitud rechazada en validación inicial: Faltan campos obligatorios (Nombre, Email o Cantidad válida). Datos recibidos: {{ JSON.stringify($('On form submission').item.json) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        448,
+        96
+      ],
+      "id": "fa81d8db-e74e-45fc-bf8d-32b76f8fe8dc",
+      "name": "Create a database page2",
+      "credentials": {
+        "notionOAuth2Api": {
+          "id": "bUslQz2grPaZy1B9",
+          "name": "Notion account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Create a database page",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a database page2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a database page": {
+      "main": [
+        [
+          {
+            "node": "Create a database page1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a database page1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many database pages in Notion": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Update a database page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a database page": {
+      "main": [
+        [
+          {
+            "node": "Create a card",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a card": {
+      "main": [
+        [
+          {
+            "node": "Update a database page1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a database page1": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Update a database page2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a database page2": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "42602721-ede7-4ecf-82f8-d8dc63f7255a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "fc5dea86859573f9611e0f26af4b2f8cca1e38499e9cb842b6919a983c07e974"
+  },
+  "nodeGroups": [],
+  "id": "LAvpAFZ2Skx38hPU",
+  "tags": []
+}
